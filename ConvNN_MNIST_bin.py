@@ -5,12 +5,11 @@ import numpy as np
 import torch
 import torch.nn as nn
 from torch.utils import data
-from tqdm import trange
+from tqdm import trange, tqdm
 from hvp_operator import to_vector
 from sampling import generate_weights, set_model_parameters
 from torchvision.datasets import MNIST
 import torchvision.transforms as transforms
-from tqdm import tqdm
 
 
 def sample_scores(model, criterion, data_input, data_target, test_loader, weights_mle, N_samples=10, arbitrary=False, k=2):
@@ -81,12 +80,6 @@ if __name__ == '__main__':
         nn.Linear(256, 2),
     )
 
-    # model = nn.Sequential(
-    #     nn.Linear(784, 256),
-    #     nn.ReLU(),
-    #     nn.Linear(256, 2)
-    # )
-
     criterion = nn.CrossEntropyLoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=lr)
 
@@ -134,17 +127,23 @@ if __name__ == '__main__':
     data_input = test_batch[0]
     data_target = test_batch[1]
 
-    scores = sample_scores(model, criterion, data_input, data_target, test_loader, weights_mle, N_samples=50, k=15)
-
+    scores = sample_scores(model, criterion, data_input, data_target, test_loader, weights_mle, N_samples=100, k=8)
+    print(f'Accuracy mean = {np.mean(scores[0])}')
+    print(f'Accuracy std = {np.std(scores[0])}')
     plt.hist(scores[0], bins=25)
+    # plt.xlim(96, 100)
     plt.xlabel('accuracy')
     plt.ylabel('count')
-    plt.savefig('experiments/acc_cnn_bin.png')
+    plt.savefig('experiments/acc_cnn_bin_reg.png')
     plt.close()
 
+    print(f'Loss mean = {np.mean(scores[1])}')
+    print(f'Loss std = {np.std(scores[1])}')
+
     plt.hist(scores[1], bins=25)
+    # plt.xlim(0, 0.15)
     plt.xlabel('loss')
     plt.ylabel('count')
-    plt.savefig('experiments/loss_cnn_bin.png')
+    plt.savefig('experiments/loss_cnn_bin_reg.png')
     plt.close()
 

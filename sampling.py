@@ -23,9 +23,9 @@ def set_model_parameters(model, vec):
             param.copy_(new_param)
 
 
-def generate_weights(model, criterion, data_input, data_target, weights_mle, arbitrary=False, k=2):
+def generate_weights(model, criterion, data_input, data_target, weights_mle, arbitrary=False, k=1):
     n = weights_mle.shape[0]
-    m = n // k
+    m = np.int(n / k)
     print(f'n = {n}')
     print(f'm = {m}')
 
@@ -33,7 +33,7 @@ def generate_weights(model, criterion, data_input, data_target, weights_mle, arb
 
     op = ModelHessianOperator(model, criterion, data_input, data_target)
 
-    T, V = lanczos(operator=op, num_lanczos_vectors=m, size=n, use_gpu=False, start_vector=z)
+    T, V = lanczos(operator=op, num_lanczos_vectors=m, size=n, use_gpu=False, start_vector=z, regularization=True)
     print('Lanczos done')
     T = T.squeeze()
     V = V.squeeze()

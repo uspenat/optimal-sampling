@@ -41,7 +41,7 @@ class LogisticRegression(torch.nn.Module):
         return outputs
 
 
-def sample_scores(model, criterion, data_input, data_target, test_loader, weights_mle, N_samples=10, arbitrary=False, k=2):
+def sample_scores(model, criterion, data_input, data_target, test_loader, weights_mle, N_samples=10, arbitrary=False, k=3):
     acc = []
     los = []
     for i in trange(N_samples):
@@ -50,10 +50,12 @@ def sample_scores(model, criterion, data_input, data_target, test_loader, weight
 
         loss = criterion(model(data_input), data_target)
         los.append(loss.item())
+        logits = []
         total = 0
         correct = 0
         for images, labels in test_loader:
             outputs = model(images)
+            logits.append(outputs)
             _, predicted = torch.max(outputs.data, 1)
             total += labels.size(0)
             # for gpu, bring the predicted and labels back to cpu fro python operations to work
@@ -61,7 +63,8 @@ def sample_scores(model, criterion, data_input, data_target, test_loader, weight
         accuracy = 100. * correct / float(total)
         acc.append(accuracy)
         set_model_parameters(model, weights_mle)
-    return acc, los
+        print(logits)
+    return acc, los, logits
 
 
 if __name__ == '__main__':
@@ -128,16 +131,31 @@ if __name__ == '__main__':
     data_input = test_batch[0]
     data_target = test_batch[1]
 
-    scores = sample_scores(model, criterion, data_input, data_target, test_loader, weights_mle, N_samples=100)
+    acc, loss, logits = sample_scores(model, criterion, data_input, data_target, test_loader, weights_mle, N_samples=100)
+    # print(f'Accuracy mean = {np.mean(scores[0])}')
+    # print(f'Accuracy std = {np.std(scores[0])}')
 
-    plt.hist(scores[0], bins=20)
+
+    plt.hist(acc, bins=60, density=True)
     plt.xlabel('accuracy')
     plt.ylabel('count')
-    plt.savefig('experiments/acc_logreg_bin.png')
+    # plt.xlim(left=90, right=95)
+    plt.savefig('experiments/acc_logreg_reg.png')
     plt.close()
+    #
+    # print(f'Loss mean = {np.mean(scores[1])}')
+    # print(f'Loss std = {np.std(scores[1])}')
 
-    plt.hist(scores[1], bins=25)
+
+    plt.hist(loss, bins=25)
     plt.xlabel('loss')
     plt.ylabel('count')
-    plt.savefig('experiments/loss_logreg_bin.png')
+    plt.savefig('experiments/loss_logreg_reg.png')
+    plt.close()
+
+    plt.hist(logits[:, 0], density=True)
+    plt.xlabel('logits')
+    plt.ylabel('count')
+    # plt.xlim(left=90, right=95)
+    plt.savefig('experiments/logits_logreg_reg.png')
     plt.close()

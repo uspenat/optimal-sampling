@@ -8,7 +8,8 @@ def lanczos(
             size,
             num_lanczos_vectors,
             use_gpu=False,
-            start_vector=None
+            start_vector=None,
+            regularization=False
     ):
     """
     Parameters
@@ -33,6 +34,13 @@ def lanczos(
             x = x.cuda()
         return operator.apply(x.float()).cpu().numpy()
 
+    def mv(v):
+        eps = 1
+        return eps * v
+
+    I = ScipyLinearOperator(shape, mv)
     scipy_op = ScipyLinearOperator(shape, _scipy_apply)
+    if regularization:
+        scipy_op += I
     T, V = _lanczos_m_upd(A=scipy_op, m=num_lanczos_vectors, matrix_shape=shape, SV=start_vector)
     return T, V
